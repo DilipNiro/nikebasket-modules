@@ -42,6 +42,17 @@ Les index accélèrent les recherches. On les crée sur les colonnes utilisées 
 
 ---
 
+## Erreurs fréquentes
+
+| Erreur | Cause | Solution |
+|--------|-------|----------|
+| `relation "categorie" does not exist` | Table créée dans le mauvais ordre | Respectez l'ordre du README (pas de REFERENCES avant la table cible) |
+| `ERROR: syntax error at or near "user"` | `user` est un mot réservé PostgreSQL | Toujours écrire `"user"` avec guillemets |
+| `ERROR: null value in column violates not-null constraint` | Oubli d'un `NOT NULL` ou `DEFAULT` | Relisez le commentaire du TODO |
+| `duplicate key value violates unique constraint` | INSERT sans `DROP TABLE IF EXISTS` avant | Le fichier commence par des `DROP TABLE` — ils nettoient la base avant chaque exécution |
+
+---
+
 ## Pour aller plus loin
 
 - Comparez votre solution avec `database/schema.sql`
