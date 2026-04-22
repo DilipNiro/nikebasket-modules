@@ -21,6 +21,7 @@ const cookieParser = require('cookie-parser');
 const errorHandler  = require('./middleware/errorHandler');
 const authRoutes    = require('./routes/auth.routes');
 const productRoutes = require('./routes/products.routes');
+const cartRoutes    = require('./routes/cart.routes');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -38,6 +39,7 @@ app.use(express.json());
 // -- Routes -------------------------------------------------------
 app.use('/api/auth',     authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/cart',     cartRoutes);
 
 // -- Route de santé (utile pour Docker/CI) -----------------------
 app.get('/api/health', (req, res) => {
