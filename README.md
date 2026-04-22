@@ -55,4 +55,16 @@ Sans `FOR UPDATE` : les deux commanderaient le même article → stock négatif.
 
 ---
 
+## Erreurs fréquentes
+
+| Erreur | Cause | Solution |
+|--------|-------|----------|
+| `client.release is not a function` | Utilisation de `pool.query()` au lieu de `pool.connect()` | Les transactions nécessitent `pool.connect()` pour avoir une connexion dédiée |
+| `cannot run inside a transaction block` | `BEGIN` appelé deux fois (transaction imbriquée) | Une seule transaction par `client` — ne réutilisez pas un client déjà dans une transaction |
+| La connexion est bloquée / timeout | `client.release()` oublié | Toujours dans le bloc `finally` pour garantir la libération même en cas d'erreur |
+| Commande créée même si le stock est insuffisant | ROLLBACK oublié avant le `return` d'erreur | Après chaque `return res.status(4xx)`, appelez `await client.query('ROLLBACK')` d'abord |
+| Stock négatif en production | `FOR UPDATE` manquant | Sans verrou, deux requêtes simultanées lisent le même stock → décrémentent chacune → stock négatif |
+
+---
+
 **Module suivant → `module-07-starter` : Panel Admin (backend)**
