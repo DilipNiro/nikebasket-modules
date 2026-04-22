@@ -1,34 +1,99 @@
-// src/App.jsx — Point d'entrée de l'application React
-// Ce fichier sera complété au module 09 (routes) et module 10 (contextes).
-// Pour l'instant, il affiche juste les composants que vous allez créer.
+// src/App.jsx — Routeur principal React Router v6
+// -----------------------------------------------
+// Ce fichier définit toutes les routes de l'application.
+// Chaque route associe un chemin URL à un composant page.
 
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import ProductCard from './components/ProductCard';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-// Données de test pour vérifier votre ProductCard
-const testProduct = {
-  id: 1,
-  nom: 'Nike Air Max 90',
-  prix: 149.99,
-  image_url: '/images/airmax90.jpg',
-  image_hover_url: '/images/airmax90h.jpg',
-  categorie: 'Running',
-  statut: 'actif',
-};
+import Navbar         from './components/Navbar';
+import Footer         from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Pages importées (à compléter au fur et à mesure)
+import Home          from './pages/Home';
+import Products      from './pages/Products';
+import ProductDetail from './pages/ProductDetail';
+import Login         from './pages/Login';
+import Register      from './pages/Register';
+import Cart          from './pages/Cart';
+import Orders        from './pages/Orders';
+import OrderDetail   from './pages/OrderDetail';
+import Profile       from './pages/Profile';
+import AdminLayout   from './pages/admin/AdminLayout';
+import Dashboard     from './pages/admin/Dashboard';
+import AdminProducts from './pages/admin/Products';
+import AdminOrders   from './pages/admin/Orders';
+import AdminUsers    from './pages/admin/Users';
+import AdminStock    from './pages/admin/Stock';
+
+// ================================================================
+// TODO — Compléter App.jsx avec les contextes et les routes
+// ================================================================
+// Structure attendue :
+//
+//   <BrowserRouter>
+//     <AuthProvider>           ← contexte auth (module 10)
+//       <CartProvider>         ← contexte panier (module 10)
+//         <Navbar />
+//         <Routes>
+//           Routes publiques :
+//             / → Home
+//             /products → Products
+//             /products/:id → ProductDetail
+//             /login → Login
+//             /register → Register
+//
+//           Routes protégées (connecté uniquement) :
+//             /cart → <ProtectedRoute><Cart /></ProtectedRoute>
+//             /orders → <ProtectedRoute><Orders /></ProtectedRoute>
+//             /orders/:id → <ProtectedRoute><OrderDetail /></ProtectedRoute>
+//             /profile → <ProtectedRoute><Profile /></ProtectedRoute>
+//
+//           Routes admin (layout imbriqué) :
+//             /admin → <ProtectedRoute><AdminLayout /></ProtectedRoute>
+//               index → Dashboard
+//               products → AdminProducts
+//               orders → AdminOrders
+//               users → AdminUsers
+//               stock → AdminStock
+//         </Routes>
+//         <Footer />
+//       </CartProvider>
+//     </AuthProvider>
+//   </BrowserRouter>
+//
+// Note : AuthProvider et CartProvider seront ajoutés au module 10.
+//        Pour l'instant, les routes fonctionnent sans contextes.
+//        ProtectedRoute (sans contexte) laisse tout passer pour l'instant.
 
 export default function App() {
   return (
-    <div>
+    <BrowserRouter>
       <Navbar />
-      <main style={{ padding: '2rem' }}>
-        <h1>NikeBasket — Test composants</h1>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-          <ProductCard product={testProduct} />
-          <ProductCard product={{ ...testProduct, id: 2, nom: 'Nike Air Force 1', statut: 'en_rupture' }} />
-        </div>
-      </main>
+      <Routes>
+        {/* TODO : ajouter les routes */}
+        <Route path="/"             element={<Home />} />
+        <Route path="/products"     element={<Products />} />
+        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/login"        element={<Login />} />
+        <Route path="/register"     element={<Register />} />
+
+        {/* Routes protégées */}
+        <Route path="/cart"         element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+        <Route path="/orders"       element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+        <Route path="/orders/:id"   element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
+        <Route path="/profile"      element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+        {/* Panel admin — routes imbriquées */}
+        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+          <Route index           element={<Dashboard />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="orders"   element={<AdminOrders />} />
+          <Route path="users"    element={<AdminUsers />} />
+          <Route path="stock"    element={<AdminStock />} />
+        </Route>
+      </Routes>
       <Footer />
-    </div>
+    </BrowserRouter>
   );
 }
