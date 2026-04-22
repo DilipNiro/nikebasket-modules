@@ -13,6 +13,31 @@ Les modules sont **linéaires** : chaque module s'appuie sur le précédent, jus
 
 ---
 
+## Prérequis
+
+Avant de commencer, installez les outils suivants :
+
+| Outil | Version | Lien |
+|-------|---------|------|
+| Node.js | 20 LTS | https://nodejs.org |
+| npm | inclus avec Node.js | — |
+| PostgreSQL | 16 | https://www.postgresql.org/download |
+| Docker Desktop | dernière version | https://www.docker.com/products/docker-desktop |
+| Git | dernière version | https://git-scm.com |
+
+Vérifiez l'installation :
+```bash
+node --version   # → v20.x.x
+npm --version    # → 10.x.x
+psql --version   # → psql (PostgreSQL) 16.x
+docker --version # → Docker version 27.x.x
+git --version    # → git version 2.x.x
+```
+
+> **Windows** : utilisez [WSL2](https://learn.microsoft.com/fr-fr/windows/wsl/install) ou Git Bash pour les commandes shell.
+
+---
+
 ## Parcours complet
 
 | Module | Thème | Notions clés |
@@ -34,18 +59,19 @@ Les modules sont **linéaires** : chaque module s'appuie sur le précédent, jus
 ## Comment utiliser ce dépôt
 
 ```bash
-# Cloner le dépôt
+# 1. Cloner le dépôt
 git clone https://github.com/DilipNiro/nikebasket-modules
 cd nikebasket-modules
 
-# Démarrer au module 01
+# 2. Démarrer au module 01
 git checkout module-01-starter
-# Lire le README du module et compléter les TODO
 
-# En cas de blocage, consulter la solution :
+# 3. Lire le README du module et compléter les TODO
+
+# 4. En cas de blocage, consulter la solution :
 git checkout module-01-solution
 
-# Puis passer au module suivant (le code précédent est déjà inclus)
+# 5. Puis passer au module suivant (le code précédent est déjà inclus)
 git checkout module-02-starter
 ```
 
