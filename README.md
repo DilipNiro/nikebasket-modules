@@ -49,4 +49,16 @@ return res.status(401).json({ error: 'Identifiants incorrects' });
 
 ---
 
+## Erreurs fréquentes
+
+| Erreur | Cause | Solution |
+|--------|-------|----------|
+| `401` sur toutes les routes protégées | Cookie non envoyé | Vérifiez `withCredentials: true` dans Axios (module 10) et `credentials: true` dans CORS (module 02) |
+| `JsonWebTokenError: invalid signature` | `JWT_SECRET` différent entre le token généré et la vérification | Utilisez toujours `process.env.JWT_SECRET`, ne codez jamais la valeur en dur |
+| `Cannot read properties of undefined (reading 'id')` | `req.user` est undefined | `verifyToken` n'a pas été appelé avant le controller — vérifiez que le middleware est bien dans la route |
+| Le mot de passe en clair est stocké en base | Oubli du `bcrypt.hash` avant `INSERT` | Toujours hasher AVANT d'insérer — ne jamais stocker de mot de passe en clair |
+| `cookieParser is not a function` | Import incorrect | `const cookieParser = require('cookie-parser');` (pas de déstructuration) |
+
+---
+
 **Module suivant → `module-05-starter` : Panier**
