@@ -19,6 +19,7 @@ const cors         = require('cors');
 const cookieParser = require('cookie-parser');
 
 const errorHandler  = require('./middleware/errorHandler');
+const authRoutes    = require('./routes/auth.routes');
 const productRoutes = require('./routes/products.routes');
 
 const app  = express();
@@ -35,6 +36,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 // -- Routes -------------------------------------------------------
+app.use('/api/auth',     authRoutes);
 app.use('/api/products', productRoutes);
 
 // -- Route de santé (utile pour Docker/CI) -----------------------

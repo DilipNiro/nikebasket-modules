@@ -1,46 +1,96 @@
-# Module 03 — Solution : API Produits
+# Module 04 — Authentification JWT
 
-## Points clés à retenir
+## Objectif
 
-### Requête WHERE dynamique
-```js
-const conditions = [];
-const values = [];
-let idx = 1;
+Implémenter le système d'authentification complet :
+- Inscription avec validation du mot de passe
+- Connexion avec cookie JWT httpOnly
+- Déconnexion
+- Accès au profil de l'utilisateur connecté
 
-if (categorie) {
-  conditions.push(`p.categorie_id = $${idx++}`);
-  values.push(parseInt(categorie));
-}
-const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+---
+
+## Ce que vous allez apprendre
+
+- Hasher un mot de passe avec **bcrypt** (`bcrypt.hash`, `bcrypt.compare`)
+- Générer un **token JWT** (`jwt.sign`) et le vérifier (`jwt.verify`)
+- Stocker le JWT dans un **cookie httpOnly** (protection XSS)
+- Créer un **middleware** d'authentification `verifyToken`
+- Implémenter le **RBAC** (contrôle d'accès par rôle) avec `requireAdmin`
+- Sécurité OWASP : message d'erreur générique au login (ne pas indiquer si c'est l'email ou le MDP)
+
+---
+
+## Structure ajoutée dans ce module
+
 ```
-Ce pattern est fondamental : on construit la clause WHERE progressivement et on maintient un compteur `idx` pour les paramètres `$1`, `$2`, etc.
-
-### Protection contre l'injection SQL dans le ORDER BY
-```js
-const allowedSort = ['date_sortie', 'prix', 'nom'];
-const safeSort = allowedSort.includes(sort) ? sort : 'date_sortie';
-```
-Les paramètres `$1` ne peuvent pas être utilisés pour les noms de colonnes — on doit utiliser une liste blanche.
-
-### Promise.all pour les requêtes parallèles
-```js
-const [{ rows: products }, { rows: countRows }] = await Promise.all([
-  pool.query(queryPrincipale, values),
-  pool.query(queryCount, countValues),
-]);
-```
-Les 2 requêtes s'exécutent en parallèle → 2× plus rapide qu'en séquentiel.
-
-### getProductById : 3 requêtes
-```js
-const [produit, images, stock] = await Promise.all([
-  pool.query('SELECT p.*, c.nom AS categorie FROM "produits" p JOIN "categorie"...'),
-  pool.query('SELECT image_url FROM "produit_images" WHERE produit_id = $1 ORDER BY ordre', [id]),
-  pool.query('SELECT s.quantite, t.valeur AS taille... WHERE s.produit_id = $1 AND s.quantite > 0', [id]),
-]);
+backend/src/
+├── middleware/
+│   ├── auth.js              ← TODO : verifyToken, requireAdmin
+│   └── errorHandler.js      ✅ module 02
+├── routes/
+│   ├── auth.routes.js       ← donné
+│   └── products.routes.js   ✅ module 03
+└── controllers/
+    ├── auth.controller.js   ← TODO : register, login, logout, getMe
+    └── products.controller.js ✅ module 03
 ```
 
 ---
 
-**Module suivant → `module-04-starter` : Authentification JWT**
+## Votre mission
+
+### Fichier 1 : `backend/src/middleware/auth.js`
+3 middlewares à implémenter :
+- `verifyToken` — lit le cookie `token`, vérifie le JWT, ajoute `req.user`
+- `requireAdmin` — vérifie `req.user.role === 'admin'`
+- `requireAdminOrEmploye` — vérifie admin OU employé
+
+### Fichier 2 : `backend/src/controllers/auth.controller.js`
+4 fonctions à implémenter (TODO 1 à 4) :
+- `register` — inscription avec bcrypt + JWT
+- `login` — connexion avec bcrypt.compare + JWT
+- `logout` — suppression du cookie
+- `getMe` — lecture du profil depuis la base
+
+---
+
+## Tester votre travail
+
+```bash
+npm run dev
+
+# Inscription
+curl -X POST http://localhost:3001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"nom":"Alice","email":"alice@test.fr","password":"MonMotDePasse1!"}'
+# → 201 { message: 'Inscription réussie', user: {...} }
+
+# Connexion
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@test.fr","password":"MonMotDePasse1!"}' \
+  -c cookies.txt
+# → 200 { message: 'Connexion réussie', user: {...} }
+
+# Profil (avec cookie)
+curl http://localhost:3001/api/auth/me -b cookies.txt
+# → 200 { user: { id, nom, email, role, created_at } }
+
+# Déconnexion
+curl -X POST http://localhost:3001/api/auth/logout -b cookies.txt
+# → 200 { message: 'Déconnexion réussie' }
+```
+
+---
+
+## Questions de compréhension
+
+1. Pourquoi bcrypt est-il préférable à SHA-256 pour hasher des mots de passe ?
+2. Que contient le **payload** d'un token JWT ? Est-il secret ?
+3. Pourquoi utilise-t-on `httpOnly: true` sur le cookie JWT ?
+4. Pourquoi renvoyer "Identifiants incorrects" et non "Email inconnu" ou "Mauvais mot de passe" ?
+
+---
+
+**Module suivant → `module-05-starter` : Panier**
