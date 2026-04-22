@@ -1,76 +1,57 @@
 // src/context/AuthContext.jsx — État utilisateur global
 // -------------------------------------------------------
-// La Context API permet de partager des données entre composants
-// sans passer des props à chaque niveau (prop drilling).
-//
-// AuthContext gère : utilisateur connecté, login, logout, register.
+// Context API (choix vs Redux) : pour un projet de cette taille,
+// Redux introduirait une complexité disproportionnée.
+// AuthContext gère : utilisateur connecté, chargement initial, login, logout.
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
 
-// ================================================================
-// TODO 1 — AuthProvider : le fournisseur de contexte
-// ================================================================
-// export function AuthProvider({ children }) {
-//
-//   States à déclarer :
-//     const [user, setUser] = useState(null);
-//     const [loading, setLoading] = useState(true); // vrai pendant la vérif initiale
-//
-//   useEffect au montage :
-//     1. Appeler GET /auth/me pour savoir si l'utilisateur est déjà connecté
-//        (il peut avoir un cookie JWT valide d'une session précédente)
-//        Si succès → setUser(res.data.user)
-//        Si erreur → setUser(null)
-//        Dans tous les cas → setLoading(false)
-//
-//     2. Écouter l'événement 'auth:expired' (déclenché par l'intercepteur Axios)
-//        window.addEventListener('auth:expired', handleExpired)
-//        Penser à retourner le cleanup : return () => window.removeEventListener(...)
-//
-//   Fonctions à exposer :
-//     async login(email, password) {
-//       const res = await api.post('/auth/login', { email, password });
-//       setUser(res.data.user);
-//       return res.data.user;
-//     }
-//     async register(nom, email, password) { ... similaire }
-//     async logout() {
-//       await api.post('/auth/logout');
-//       setUser(null);
-//     }
-//
-//   Retourner :
-//     <AuthContext.Provider value={{ user, loading, login, register, logout }}>
-//       {children}
-//     </AuthContext.Provider>
-// }
-
 export function AuthProvider({ children }) {
-  // TODO : implémenter AuthProvider
-  return <AuthContext.Provider value={{ user: null, loading: false, login: async () => {}, register: async () => {}, logout: async () => {} }}>{children}</AuthContext.Provider>;
+  const [user,    setUser]    = useState(null);
+  const [loading, setLoading] = useState(true); // Vrai pendant la vérification initiale
+
+  // Au montage : vérifier si l'utilisateur est déjà connecté (cookie JWT valide)
+  useEffect(() => {
+    api.get('/auth/me')
+      .then(res => setUser(res.data.user))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+
+    // Écouter l'événement "token expiré" depuis l'intercepteur Axios
+    const handleExpired = () => setUser(null);
+    window.addEventListener('auth:expired', handleExpired);
+    return () => window.removeEventListener('auth:expired', handleExpired);
+  }, []);
+
+  async function login(email, password) {
+    const res = await api.post('/auth/login', { email, password });
+    setUser(res.data.user);
+    return res.data.user;
+  }
+
+  async function register(nom, email, password) {
+    const res = await api.post('/auth/register', { nom, email, password });
+    setUser(res.data.user);
+    return res.data.user;
+  }
+
+  async function logout() {
+    await api.post('/auth/logout');
+    setUser(null);
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-// ================================================================
-// TODO 2 — useAuth : hook personnalisé
-// ================================================================
-// Ce hook simplifie la consommation du contexte.
-// Il doit :
-//   1. Appeler useContext(AuthContext)
-//   2. Vérifier que le contexte existe (lancer une erreur sinon)
-//   3. Retourner le contexte
-//
-// Aide :
-//   export function useAuth() {
-//     const ctx = useContext(AuthContext);
-//     if (!ctx) throw new Error('useAuth doit être utilisé dans AuthProvider');
-//     return ctx;
-//   }
-
+// Hook personnalisé pour consommer le contexte plus facilement
 export function useAuth() {
-  // TODO : implémenter useAuth
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth doit être utilisé dans AuthProvider');
   return ctx;

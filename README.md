@@ -1,118 +1,68 @@
-# Module 10 — Context API & Connexion au backend
+# Module 10 — Solution : Context API & Connexion au backend
 
-## Objectif
+## Points clés à retenir
 
-Connecter le frontend au backend en implémentant :
-- L'instance **Axios** centralisée (avec cookie JWT automatique)
-- **AuthContext** — état utilisateur global partagé dans toute l'app
-- **CartContext** — état panier synchronisé avec l'API
-
-À la fin de ce module, le site est **fonctionnel de bout en bout**.
-
----
-
-## Ce que vous allez apprendre
-
-- La **Context API** de React : `createContext`, `useContext`, `Provider`
-- Les **hooks personnalisés** : `useAuth()`, `useCart()`
-- **Axios** : instance centralisée, `withCredentials`, intercepteurs
-- Le **lifting state up** : pourquoi l'état global est préférable aux props
-
----
-
-## Structure ajoutée dans ce module
-
-```
-frontend/src/
-├── api/
-│   └── axios.js            ← TODO : instance Axios + intercepteur
-└── context/
-    ├── AuthContext.jsx     ← TODO : login, logout, register, useAuth()
-    └── CartContext.jsx     ← TODO : panier synchronisé, useCart()
-```
-
----
-
-## Votre mission
-
-### TODO 1 — `api/axios.js`
-
+### Axios — withCredentials : la clé de l'authentification
 ```js
-import axios from 'axios';
-
 const api = axios.create({
   baseURL: '/api',
-  withCredentials: true,        // cookie httpOnly envoyé automatiquement
-  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // ← le navigateur envoie le cookie httpOnly automatiquement
 });
+```
+Sans `withCredentials: true` : le cookie JWT n'est pas envoyé → toutes les routes protégées renvoient 401.
 
-// Gérer les 401 (token expiré)
+### Intercepteur : gérer les 401 globalement
+```js
 api.interceptors.response.use(
-  response => response,
+  response => response,           // succès : laisser passer
   error => {
     if (error.response?.status === 401) {
-      window.dispatchEvent(new Event('auth:expired'));
+      window.dispatchEvent(new Event('auth:expired')); // → AuthContext déconnecte l'user
     }
-    return Promise.reject(error);
+    return Promise.reject(error); // propager l'erreur
   }
 );
-
-export default api;
 ```
 
-### TODO 2 — `context/AuthContext.jsx`
-
-Implémentez `AuthProvider` :
-1. Au montage : appeler `GET /auth/me` pour vérifier si connecté
-2. Écouter l'événement `'auth:expired'` → `setUser(null)`
-3. Exposer `login`, `register`, `logout`
-
-### TODO 3 — `context/CartContext.jsx`
-
-Implémentez `CartProvider` :
-1. Recharger le panier quand `user` change
-2. Exposer `addToCart`, `updateQuantity`, `removeFromCart`, `clearCart`
-3. Toujours resynchroniser depuis l'API après chaque action
-
----
-
-## Concept clé : le re-render sur changement de contexte
-
-```jsx
-// Dans AuthContext :
-setUser(nouveauUser); // → tous les composants qui utilisent useAuth() se re-rendent
-
-// Dans Navbar.jsx (useAuth) :
-const { user } = useAuth();
-// user mis à jour → Navbar affiche le nouveau nom automatiquement
+### AuthContext — vérification au montage
+```js
+useEffect(() => {
+  api.get('/auth/me')                         // le cookie est envoyé automatiquement
+    .then(res => setUser(res.data.user))      // connecté : stocker l'user
+    .catch(() => setUser(null))               // pas de cookie valide : null
+    .finally(() => setLoading(false));        // fin du chargement dans tous les cas
+}, []);
 ```
+`loading: true` pendant cette vérification → ProtectedRoute affiche "Chargement..." plutôt que de rediriger.
 
----
+### CartContext — synchronisation post-action
+```js
+async function addToCart(produitId, tailleId, couleurId, quantite = 1) {
+  await api.post('/cart', { produit_id: produitId, ... });
+  await fetchCart(); // ← toujours resynchroniser depuis l'API
+}
+```
+On ne calcule pas le nouveau total côté frontend — on le demande au backend qui a la source de vérité.
 
-## Tester votre travail
-
-```bash
-# Backend
-cd backend && npm run dev
-
-# Frontend (autre terminal)
-cd frontend && npm run dev
-
-# Ouvrir http://localhost:5173
-# 1. S'inscrire → la Navbar doit afficher votre nom
-# 2. Ajouter un produit au panier → badge panier doit s'incrémenter
-# 3. Passer commande → le panier doit se vider
-# 4. Se déconnecter → la Navbar revient à "Se connecter"
+### useEffect avec dépendance [user]
+```js
+// Dans CartContext :
+useEffect(() => {
+  if (user) fetchCart(); // connexion → charger le panier
+  else setCart({ items: [], total: 0, count: 0 }); // déconnexion → vider
+}, [user]); // se re-déclenche chaque fois que user change
 ```
 
 ---
 
-## Questions de compréhension
+## Le site est maintenant fonctionnel !
 
-1. Pourquoi `withCredentials: true` est-il nécessaire dans Axios ?
-2. Que se passe-t-il si on n'appelle pas `fetchCart()` après `addToCart()` ?
-3. Pourquoi utilise-t-on un `useEffect` avec `[user]` comme dépendance dans CartContext ?
-4. Quelle est la différence entre `useState` et Context API pour l'état global ?
+Testez l'expérience complète :
+1. Parcourir le catalogue sans être connecté
+2. S'inscrire → cookie JWT déposé automatiquement
+3. Ajouter des produits au panier
+4. Passer une commande → stock décrémenté
+5. Se connecter en admin → accéder au panel d'administration
 
 ---
 

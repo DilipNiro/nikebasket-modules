@@ -1,37 +1,28 @@
-// src/api/axios.js — Instance Axios centralisée
-// -----------------------------------------------
-// Toutes les requêtes API de l'application passent par cette instance.
-// Cela permet de configurer le comportement global en un seul endroit.
+// src/api/axios.js — Instance Axios avec intercepteur JWT
+// ---------------------------------------------------------
+// Toutes les requêtes API passent par cette instance.
+// withCredentials: true → envoie automatiquement le cookie JWT
+// dans chaque requête (le navigateur s'en charge seul).
 
 import axios from 'axios';
 
-// ================================================================
-// TODO 1 — Créer l'instance Axios
-// ================================================================
-// Configurer l'instance avec :
-//   baseURL: '/api'              ← Vite proxy renvoie vers http://localhost:3001
-//   withCredentials: true        ← Envoie automatiquement le cookie JWT httpOnly
-//   headers: { 'Content-Type': 'application/json' }
-//
-// Aide : axios.create({ baseURL, withCredentials, headers })
-
-// TODO 2 — Ajouter un intercepteur de réponse
-// ================================================================
-// L'intercepteur doit :
-//   - Laisser passer les réponses réussies : response => response
-//   - Sur erreur 401 (token expiré) : déclencher l'événement 'auth:expired'
-//     window.dispatchEvent(new Event('auth:expired'))
-//     AuthContext écoutera cet événement pour déconnecter l'utilisateur
-//   - Re-rejeter l'erreur : return Promise.reject(error)
-//
-// Aide : api.interceptors.response.use(successFn, errorFn)
-
-// Écrivez votre code ici :
-
 const api = axios.create({
-  // TODO : configurer l'instance
+  baseURL:         '/api',
+  withCredentials: true, // Cookie httpOnly envoyé automatiquement
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// TODO : ajouter l'intercepteur
+// Intercepteur de réponse : gestion globale des 401
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      // Token expiré → redirection vers /login
+      // (géré dans AuthContext pour éviter la dépendance circulaire)
+      window.dispatchEvent(new Event('auth:expired'));
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
