@@ -6,6 +6,49 @@ Initialiser le projet frontend React et créer les 4 composants réutilisables d
 
 ---
 
+## Rappel React — Les bases indispensables
+
+> Première fois avec React ? Voici les 3 concepts que vous allez utiliser tout de suite.  
+> Documentation officielle : **https://react.dev/learn**
+
+### 1. Un composant = une fonction qui retourne du JSX
+
+```jsx
+// ProductCard.jsx
+export default function ProductCard({ product }) {
+  return (
+    <div className="card">
+      <img src={product.image_url} alt={product.nom} />
+      <p>{product.nom}</p>        {/* {} = insérer du JS dans le HTML */}
+      <p>{product.prix} €</p>
+    </div>
+  );
+}
+```
+
+### 2. Les props = les paramètres du composant
+
+```jsx
+// Appel du composant avec des données
+<ProductCard product={{ nom: "Air Max 90", prix: 129.99, image_url: "/img.jpg" }} />
+```
+
+### 3. useState = mémoriser une valeur qui peut changer
+
+```jsx
+import { useState } from 'react';
+
+function Compteur() {
+  const [count, setCount] = useState(0); // valeur initiale = 0
+
+  return <button onClick={() => setCount(count + 1)}>Clics : {count}</button>;
+}
+```
+
+> Pour aller plus loin : [react.dev/learn/your-first-component](https://react.dev/learn/your-first-component)
+
+---
+
 ## Ce que vous allez apprendre
 
 - Initialiser un projet React avec **Vite**
