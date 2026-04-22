@@ -3,7 +3,7 @@
 > Ressource pédagogique — Bachelor 3 Développeur Web & Application  
 > Efrei Paris 2026 | ADNCLLY.DEV | Tuteur : Nabil ADNANE
 
-Ce dépôt découpe la migration **PHP/MySQL → React/Node.js/PostgreSQL** en **10 modules progressifs**.  
+Ce dépôt guide les étudiants dans la **construction du projet NikeBasket de A à Z** — un site e-commerce complet en **React / Node.js / PostgreSQL**.  
 Chaque module est disponible dans deux branches :
 
 | Branche | Contenu |
