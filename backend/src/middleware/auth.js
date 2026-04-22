@@ -1,48 +1,55 @@
 // src/middleware/auth.js — Vérification du token JWT
 // ---------------------------------------------------
-// Le token JWT est stocké dans un cookie httpOnly.
-// httpOnly = JavaScript ne peut PAS lire le cookie → protection XSS.
-// Le navigateur l'envoie automatiquement à chaque requête.
+// Ce middleware vérifie que le token JWT est valide avant
+// d'autoriser l'accès aux routes protégées.
+//
+// Le token est stocké dans un cookie httpOnly (protection XSS) :
+// le navigateur l'envoie automatiquement, mais JavaScript ne peut
+// pas le lire — contrairement à un token en localStorage.
 
 const jwt = require('jsonwebtoken');
 
-// ================================================================
-// TODO 1 — verifyToken : vérifier le JWT dans le cookie
-// ================================================================
-// Ce middleware doit :
-//   1. Lire le cookie "token" depuis req.cookies.token
-//   2. Si absent → répondre 401 { error: 'Non authentifié' }
-//   3. Vérifier le token avec jwt.verify(token, process.env.JWT_SECRET)
-//      - Si valide  → ajouter req.user = decoded (contient id, email, role)
-//                     puis appeler next()
-//      - Si invalide (catch) → répondre 401 { error: 'Token invalide ou expiré' }
-//
-// Aide : jwt.verify(token, secret) retourne le payload décodé ou lève une erreur
-
+/**
+ * Middleware : vérifie le token JWT dans le cookie "token".
+ * Si valide, ajoute req.user = { id, email, role }.
+ * Sinon, retourne 401.
+ */
 const verifyToken = (req, res, next) => {
-  // TODO : implémenter verifyToken
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Token invalide ou expiré' });
+  }
 };
 
-// ================================================================
-// TODO 2 — requireAdmin : vérifier le rôle admin
-// ================================================================
-// Ce middleware doit être utilisé APRÈS verifyToken.
-// Il vérifie que req.user.role === 'admin'.
-// Si non → répondre 403 { error: 'Accès refusé — rôle admin requis' }
-// Si oui → appeler next()
-
+/**
+ * Middleware : vérifie que l'utilisateur a le rôle "admin".
+ * À utiliser APRÈS verifyToken.
+ */
 const requireAdmin = (req, res, next) => {
-  // TODO : implémenter requireAdmin
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès refusé — rôle admin requis' });
+  }
+  next();
 };
 
-// ================================================================
-// TODO 3 — requireAdminOrEmploye : vérifier admin OU employé
-// ================================================================
-// Même logique que requireAdmin mais accepte 'admin' ET 'employe'.
-// Aide : ['admin', 'employe'].includes(req.user?.role)
-
+/**
+ * Middleware : vérifie que l'utilisateur est admin OU employé.
+ * À utiliser APRÈS verifyToken.
+ */
 const requireAdminOrEmploye = (req, res, next) => {
-  // TODO : implémenter requireAdminOrEmploye
+  if (!['admin', 'employe'].includes(req.user?.role)) {
+    return res.status(403).json({ error: 'Accès refusé — rôle admin ou employé requis' });
+  }
+  next();
 };
 
 module.exports = { verifyToken, requireAdmin, requireAdminOrEmploye };
