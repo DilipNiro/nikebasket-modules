@@ -1,81 +1,52 @@
-# Module 01 — Schéma de base de données
+# Module 01 — Solution : Schéma de base de données
 
-## Objectif
+## Ce que vous deviez implémenter
 
-Concevoir et implémenter le schéma de données d'un site e-commerce de chaussures en **PostgreSQL**.
+12 tables PostgreSQL constituant le schéma complet de NikeBasket :
 
-Ce schéma est le socle de tout le projet — chaque table que vous créerez ici sera utilisée dans tous les modules suivants.
-
----
-
-## Ce que vous allez apprendre
-
-- Créer des tables PostgreSQL avec les bons types (`SERIAL`, `VARCHAR`, `DECIMAL`, `TIMESTAMPTZ`, `BOOLEAN`)
-- Définir des **clés étrangères** (`REFERENCES`) avec `ON DELETE CASCADE`
-- Écrire des **contraintes** (`CHECK`, `UNIQUE`, `NOT NULL`)
-- Créer des **index** pour optimiser les requêtes
-- Comprendre les relations entre entités (1-N, N-N via table de jonction)
-
----
-
-## Structure du projet à la fin de ce module
-
-```
-nikebasket/
-└── database/
-    └── schema.sql   ← votre mission
-```
+| Table | Rôle |
+|-------|------|
+| `user` | Utilisateurs (clients, admins, employés) |
+| `categorie` | Catégories de produits |
+| `couleur` | Couleurs disponibles |
+| `taille` | Pointures disponibles |
+| `produits` | Catalogue de chaussures |
+| `produit_images` | Images supplémentaires par produit |
+| `stock` | Stock par produit × taille × couleur |
+| `panier` | Articles en panier par utilisateur |
+| `commande` | Commandes passées |
+| `commande_produits` | Lignes de détail d'une commande |
+| `commande_historique` | Journal des changements de statut |
+| `paiement` | Enregistrement des paiements |
 
 ---
 
-## Votre mission
+## Points clés à retenir
 
-Ouvrez `database/schema.sql`.
+### SERIAL vs INT
+`SERIAL` est un raccourci PostgreSQL pour `INTEGER NOT NULL DEFAULT nextval(...)`.  
+Il crée automatiquement une séquence pour générer les identifiants.
 
-12 `TODO` vous attendent — chaque TODO correspond à une table à créer.  
-Les colonnes attendues sont décrites en commentaires au-dessus de chaque TODO.
+### ON DELETE CASCADE
+Quand on supprime un utilisateur, toutes ses commandes, son panier et ses paiements sont automatiquement supprimés.  
+Cela évite les orphelins en base (données incohérentes).
 
-### Ordre de création (important !)
+### Pourquoi stocker prix_unitaire dans commande_produits ?
+Le prix d'un produit peut changer dans le temps. En stockant le prix au moment de l'achat dans `commande_produits`, on conserve un historique fidèle même si le prix est modifié plus tard.
 
-PostgreSQL vérifie les références au moment de la création. Respectez cet ordre :
-1. `user` — aucune dépendance
-2. `categorie`, `couleur`, `taille` — aucune dépendance
-3. `produits` → dépend de `categorie`
-4. `produit_images`, `stock` → dépendent de `produits`, `taille`, `couleur`
-5. `panier` → dépend de `user`, `produits`, `couleur`, `taille`
-6. `commande` → dépend de `user`
-7. `commande_produits` → dépend de `commande`, `produits`, `taille`, `couleur`
-8. `commande_historique` → dépend de `commande`, `user`
-9. `paiement` → dépend de `user`, `commande`
-
----
-
-## Tester votre travail
-
-```bash
-# Créer la base de données
-psql -U postgres -c "CREATE DATABASE ecommerce;"
-
-# Exécuter le schéma
-psql -U postgres -d ecommerce -f database/schema.sql
-
-# Vérifier les tables créées
-psql -U postgres -d ecommerce -c "\dt"
-```
-
-Résultat attendu : 12 tables listées.
+### Les index
+Les index accélèrent les recherches. On les crée sur les colonnes utilisées dans les `WHERE` fréquents :
+- `idx_user_email` → lookups de login
+- `idx_produits_categorie` → filtrer par catégorie
+- `idx_panier_user` → récupérer le panier d'un utilisateur
 
 ---
 
-## Questions de compréhension
+## Pour aller plus loin
 
-1. Pourquoi utilise-t-on `SERIAL` plutôt que `INT` pour les identifiants ?
-2. Pourquoi stocke-t-on `prix_unitaire` dans `commande_produits` et non dans `produits` directement ?
-3. Que se passe-t-il en base quand on supprime un utilisateur (grâce à `ON DELETE CASCADE`) ?
-4. Pourquoi crée-t-on des index sur `email`, `categorie_id`, `statut` ?
+- Comparez votre solution avec `database/schema.sql`
+- Testez avec : `psql -U postgres -d ecommerce -c "\dt"` (doit lister 12 tables)
 
 ---
 
-## Passage au module suivant
-
-Une fois votre schéma validé → consultez `module-01-solution` pour comparer, puis passez à **module-02-starter**.
+**Module suivant → `module-02-starter` : Serveur Express**
