@@ -1,0 +1,91 @@
+# docker-compose.yml — Environnement complet NikeBasket
+# --------------------------------------------------------
+# Lance 3 services en une seule commande : docker-compose up
+#   - postgres : base de données PostgreSQL 16
+#   - backend  : API REST Node.js/Express (port 3001)
+#   - frontend : SPA React via Vite (port 5173)
+
+version: '3.9'
+
+services:
+
+  # ================================================================
+  # TODO 1 — Service PostgreSQL
+  # ================================================================
+  # Configurer le service "postgres" avec :
+  #   image: postgres:16-alpine
+  #   container_name: nikebasket_db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER:     postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB:       ecommerce
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data    ← données persistantes
+  #     - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql  ← init auto
+  #   ports: ["5432:5432"]
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #
+  # Le volume postgres_data évite de perdre les données à chaque docker-compose down.
+  # Le fichier schema.sql est exécuté automatiquement à la première création du conteneur.
+
+  postgres:
+    # TODO : configurer le service postgres
+
+  # ================================================================
+  # TODO 2 — Service Backend (Node.js/Express)
+  # ================================================================
+  # Configurer le service "backend" avec :
+  #   build: { context: ./backend, dockerfile: Dockerfile }
+  #   container_name: nikebasket_api
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres: { condition: service_healthy }  ← attendre que postgres soit prêt
+  #   environment:
+  #     NODE_ENV: development
+  #     PORT: 3001
+  #     PG_HOST: postgres   ← nom du service docker (pas localhost !)
+  #     PG_PORT: 5432
+  #     PG_USER: postgres
+  #     PG_PASSWORD: postgres
+  #     PG_DATABASE: ecommerce
+  #     JWT_SECRET: dev_secret_changez_en_production_32chars
+  #     JWT_EXPIRES_IN: 24h
+  #     FRONTEND_URL: http://localhost:5173
+  #   ports: ["3001:3001"]
+  #   volumes:
+  #     - ./backend:/app           ← hot reload en développement
+  #     - /app/node_modules        ← ne pas écraser les node_modules du conteneur
+
+  backend:
+    # TODO : configurer le service backend
+
+  # ================================================================
+  # TODO 3 — Service Frontend (React/Vite)
+  # ================================================================
+  # Configurer le service "frontend" avec :
+  #   build: { context: ./frontend, dockerfile: Dockerfile }
+  #   container_name: nikebasket_front
+  #   depends_on: [backend]
+  #   ports: ["5173:5173"]
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+
+  frontend:
+    # TODO : configurer le service frontend
+
+# ================================================================
+# TODO 4 — Volumes nommés
+# ================================================================
+# Déclarer les volumes persistants en bas du fichier :
+# volumes:
+#   postgres_data:
+#   uploads_data:
+
+volumes:
+  # TODO : déclarer les volumes
