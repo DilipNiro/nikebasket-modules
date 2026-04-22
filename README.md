@@ -1,90 +1,45 @@
-# Module 03 — API Produits (CRUD)
+# Module 03 — Solution : API Produits
 
-## Objectif
+## Points clés à retenir
 
-Implémenter les endpoints REST pour le catalogue de produits :
-- Lister les produits avec filtres et pagination
-- Afficher le détail d'un produit (avec stock et images)
-- Lister les catégories, tailles et couleurs disponibles
+### Requête WHERE dynamique
+```js
+const conditions = [];
+const values = [];
+let idx = 1;
 
----
-
-## Ce que vous allez apprendre
-
-- Architecture **MVC** : séparer routes, controllers, et accès base de données
-- Écrire des **requêtes SQL paramétrées** avec le pool pg (`$1`, `$2`, ...)
-- Construire une clause `WHERE` **dynamique** selon les filtres
-- Utiliser `Promise.all()` pour lancer 2 requêtes en parallèle
-- Implémenter la **pagination** (`LIMIT` / `OFFSET`)
-
----
-
-## Structure ajoutée dans ce module
-
+if (categorie) {
+  conditions.push(`p.categorie_id = $${idx++}`);
+  values.push(parseInt(categorie));
+}
+const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 ```
-backend/src/
-├── routes/
-│   └── products.routes.js   ← donné (routes déclarées)
-└── controllers/
-    └── products.controller.js  ← TODO (logique à implémenter)
+Ce pattern est fondamental : on construit la clause WHERE progressivement et on maintient un compteur `idx` pour les paramètres `$1`, `$2`, etc.
+
+### Protection contre l'injection SQL dans le ORDER BY
+```js
+const allowedSort = ['date_sortie', 'prix', 'nom'];
+const safeSort = allowedSort.includes(sort) ? sort : 'date_sortie';
 ```
+Les paramètres `$1` ne peuvent pas être utilisés pour les noms de colonnes — on doit utiliser une liste blanche.
 
----
-
-## Votre mission
-
-Ouvrez `backend/src/controllers/products.controller.js`.
-
-4 fonctions sont à implémenter (marquées TODO 1 à 4) :
-
-### TODO 1 — `getProducts`
-Liste des produits avec filtres optionnels et pagination.
-
-```sql
--- Exemple de requête finale construite dynamiquement :
-SELECT p.id, p.nom, p.prix, p.image_url, c.nom AS categorie
-FROM "produits" p
-JOIN "categorie" c ON c.id = p.categorie_id
-WHERE p.statut != 'archive'  -- condition par défaut
-  AND p.categorie_id = $1    -- si ?categorie=1
-  AND p.nom ILIKE $2         -- si ?search=air
-ORDER BY p.date_sortie DESC
-LIMIT $3 OFFSET $4
+### Promise.all pour les requêtes parallèles
+```js
+const [{ rows: products }, { rows: countRows }] = await Promise.all([
+  pool.query(queryPrincipale, values),
+  pool.query(queryCount, countValues),
+]);
 ```
+Les 2 requêtes s'exécutent en parallèle → 2× plus rapide qu'en séquentiel.
 
-### TODO 2 — `getProductById`
-Détail d'un produit : 3 requêtes séparées (produit, images, stock).
-
-### TODO 3 & 4 — `getCategories`, `getTailles`, `getCouleurs`
-Simple `SELECT * FROM "categorie/taille/couleur" ORDER BY nom/valeur`.
-
----
-
-## Tester votre travail
-
-```bash
-npm run dev
-
-# Lister les produits
-curl http://localhost:3001/api/products
-
-# Filtrer par catégorie
-curl "http://localhost:3001/api/products?categorie=1&page=1&limit=5"
-
-# Détail d'un produit
-curl http://localhost:3001/api/products/1
-
-# Catégories disponibles
-curl http://localhost:3001/api/products/categories
+### getProductById : 3 requêtes
+```js
+const [produit, images, stock] = await Promise.all([
+  pool.query('SELECT p.*, c.nom AS categorie FROM "produits" p JOIN "categorie"...'),
+  pool.query('SELECT image_url FROM "produit_images" WHERE produit_id = $1 ORDER BY ordre', [id]),
+  pool.query('SELECT s.quantite, t.valeur AS taille... WHERE s.produit_id = $1 AND s.quantite > 0', [id]),
+]);
 ```
-
----
-
-## Questions de compréhension
-
-1. Pourquoi utilise-t-on `$1`, `$2`, ... plutôt qu'interpoler directement les valeurs dans la requête SQL ?
-2. Pourquoi lancer les 2 requêtes (produits + count) avec `Promise.all` plutôt que séquentiellement ?
-3. À quoi sert `ILIKE` (vs `LIKE`) dans PostgreSQL ?
 
 ---
 
