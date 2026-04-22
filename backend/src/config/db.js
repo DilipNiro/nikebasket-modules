@@ -1,27 +1,27 @@
 // src/config/db.js — Pool de connexions PostgreSQL
 // ------------------------------------------------
-// Module "pg" : driver officiel PostgreSQL pour Node.js
-// Un pool maintient plusieurs connexions ouvertes en permanence
-// ce qui évite le coût d'ouverture/fermeture à chaque requête.
+// Utilise le module "pg" avec un pool de connexions.
+// Un pool évite de créer/fermer une connexion à chaque requête,
+// ce qui améliore les performances (concept important en production).
 
 const { Pool } = require('pg');
 
-// TODO 1 — Créer un pool de connexions PostgreSQL
-// Le pool doit lire sa configuration depuis les variables d'environnement :
-//   process.env.PG_HOST     → host (défaut 'localhost')
-//   process.env.PG_PORT     → port (défaut '5432', convertir en entier)
-//   process.env.PG_USER     → user (défaut 'postgres')
-//   process.env.PG_PASSWORD → password (défaut 'postgres')
-//   process.env.PG_DATABASE → database (défaut 'ecommerce')
-//   max: 10                 → nombre max de connexions simultanées
-//   idleTimeoutMillis: 30000
-//   connectionTimeoutMillis: 2000
-//
-// Aide : new Pool({ host, port, user, password, database, max, ... })
-//
-// Après la création du pool, écouter l'événement 'error' pour logger
-// les erreurs inattendues : pool.on('error', (err) => console.error(...))
-//
-// Exporter le pool : module.exports = pool
+// Le pool est configuré via les variables d'environnement.
+// En développement, elles sont chargées depuis le fichier .env.
+const pool = new Pool({
+  host:     process.env.PG_HOST     || 'localhost',
+  port:     parseInt(process.env.PG_PORT || '5432'),
+  user:     process.env.PG_USER     || 'postgres',
+  password: process.env.PG_PASSWORD || 'postgres',
+  database: process.env.PG_DATABASE || 'ecommerce',
+  max:      10,        // Nombre maximum de connexions simultanées
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
 
-// Écrivez votre code ici :
+// Vérification de la connexion au démarrage
+pool.on('error', (err) => {
+  console.error('[DB] Erreur inattendue sur le pool :', err.message);
+});
+
+module.exports = pool;

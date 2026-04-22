@@ -1,87 +1,57 @@
-# Module 02 — Serveur Express
+# Module 02 — Solution : Serveur Express
 
-## Objectif
+## Ce que vous deviez implémenter
 
-Créer le serveur **Node.js/Express** qui se connecte à PostgreSQL et expose une première route de santé.
+### `backend/src/config/db.js` — Pool PostgreSQL
 
-À la fin de ce module, votre backend répondra à `GET /api/health`.
+```js
+const { Pool } = require('pg');
 
----
+const pool = new Pool({
+  host:     process.env.PG_HOST     || 'localhost',
+  port:     parseInt(process.env.PG_PORT || '5432'),
+  user:     process.env.PG_USER     || 'postgres',
+  password: process.env.PG_PASSWORD || 'postgres',
+  database: process.env.PG_DATABASE || 'ecommerce',
+  max:      10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
 
-## Ce que vous allez apprendre
-
-- Initialiser un projet Node.js (`package.json`, `npm install`)
-- Créer un serveur Express avec les middlewares essentiels
-- Connecter Node.js à PostgreSQL avec un **pool de connexions** (`pg`)
-- Charger les variables d'environnement avec `dotenv`
-- Gérer les erreurs de manière centralisée
-
----
-
-## Structure du projet à la fin de ce module
-
-```
-nikebasket/
-├── database/
-│   └── schema.sql          ✅ module 01
-└── backend/
-    ├── package.json        ← donné
-    ├── .env.example        ← donné (copier en .env et remplir)
-    └── src/
-        ├── config/
-        │   └── db.js       ← TODO : pool PostgreSQL
-        ├── middleware/
-        │   └── errorHandler.js  ← donné
-        └── app.js          ← TODO : serveur Express
+pool.on('error', (err) => console.error('[DB] Erreur :', err.message));
+module.exports = pool;
 ```
 
----
+### `backend/src/app.js` — Serveur Express
 
-## Mise en place
+```js
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', credentials: true }));
+app.use(cookieParser());
+app.use(express.json());
 
-```bash
-cd backend
-cp .env.example .env      # Copier et remplir vos identifiants PostgreSQL
-npm install               # Installer les dépendances
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use(errorHandler); // toujours en dernier
 ```
 
 ---
 
-## Votre mission
+## Points clés à retenir
 
-### Fichier 1 : `backend/src/config/db.js`
+### credentials: true dans CORS
+Sans cette option, le navigateur n'envoie pas les cookies dans les requêtes cross-origin.  
+Notre JWT est dans un cookie → sans `credentials: true`, l'authentification ne fonctionne pas.
 
-Créer le **pool de connexions** PostgreSQL en lisant les variables d'environnement `PG_HOST`, `PG_PORT`, `PG_USER`, `PG_PASSWORD`, `PG_DATABASE`.
+### Pool vs connexion unique
+Un pool maintient ~10 connexions ouvertes en permanence.  
+Chaque requête HTTP emprunte une connexion disponible et la rend après usage.  
+Sans pool : chaque requête ouvre + ferme une connexion = lent.
 
-### Fichier 2 : `backend/src/app.js`
-
-Configurer le serveur Express avec :
-- **CORS** avec `credentials: true` (obligatoire pour les cookies JWT)
-- **cookie-parser** (pour lire les cookies dans `req.cookies`)
-- **express.json()** (pour parser le corps des requêtes)
-- Une route de santé : `GET /api/health`
-- Le middleware d'erreurs en dernier
-
----
-
-## Tester votre travail
-
-```bash
-npm run dev
-# → Serveur démarré sur http://localhost:3001
-
-curl http://localhost:3001/api/health
-# → { "status": "ok", "timestamp": "..." }
-```
-
----
-
-## Questions de compréhension
-
-1. Pourquoi `credentials: true` est-il indispensable dans la config CORS ?
-2. Quelle est la différence entre un pool de connexions et une connexion directe ?
-3. Pourquoi le middleware d'erreurs doit-il être monté **en dernier** ?
-4. Que se passe-t-il si `dotenv.config()` est appelé après l'utilisation des variables ?
+### NODE_ENV !== 'test'
+Jest (notre outil de test) importe `app.js` directement.  
+Si le serveur démarrait toujours, le port serait occupé et les tests échoueraient.
 
 ---
 
