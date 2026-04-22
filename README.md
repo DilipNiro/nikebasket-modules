@@ -1,52 +1,88 @@
-# Module 01 — Solution : Schéma de base de données
+# Module 02 — Serveur Express
 
-## Ce que vous deviez implémenter
+## Objectif
 
-12 tables PostgreSQL constituant le schéma complet de NikeBasket :
+Créer le serveur **Node.js/Express** qui se connecte à PostgreSQL et expose une première route de santé.
 
-| Table | Rôle |
-|-------|------|
-| `user` | Utilisateurs (clients, admins, employés) |
-| `categorie` | Catégories de produits |
-| `couleur` | Couleurs disponibles |
-| `taille` | Pointures disponibles |
-| `produits` | Catalogue de chaussures |
-| `produit_images` | Images supplémentaires par produit |
-| `stock` | Stock par produit × taille × couleur |
-| `panier` | Articles en panier par utilisateur |
-| `commande` | Commandes passées |
-| `commande_produits` | Lignes de détail d'une commande |
-| `commande_historique` | Journal des changements de statut |
-| `paiement` | Enregistrement des paiements |
+À la fin de ce module, votre backend répondra à `GET /api/health`.
 
 ---
 
-## Points clés à retenir
+## Ce que vous allez apprendre
 
-### SERIAL vs INT
-`SERIAL` est un raccourci PostgreSQL pour `INTEGER NOT NULL DEFAULT nextval(...)`.  
-Il crée automatiquement une séquence pour générer les identifiants.
-
-### ON DELETE CASCADE
-Quand on supprime un utilisateur, toutes ses commandes, son panier et ses paiements sont automatiquement supprimés.  
-Cela évite les orphelins en base (données incohérentes).
-
-### Pourquoi stocker prix_unitaire dans commande_produits ?
-Le prix d'un produit peut changer dans le temps. En stockant le prix au moment de l'achat dans `commande_produits`, on conserve un historique fidèle même si le prix est modifié plus tard.
-
-### Les index
-Les index accélèrent les recherches. On les crée sur les colonnes utilisées dans les `WHERE` fréquents :
-- `idx_user_email` → lookups de login
-- `idx_produits_categorie` → filtrer par catégorie
-- `idx_panier_user` → récupérer le panier d'un utilisateur
+- Initialiser un projet Node.js (`package.json`, `npm install`)
+- Créer un serveur Express avec les middlewares essentiels
+- Connecter Node.js à PostgreSQL avec un **pool de connexions** (`pg`)
+- Charger les variables d'environnement avec `dotenv`
+- Gérer les erreurs de manière centralisée
 
 ---
 
-## Pour aller plus loin
+## Structure du projet à la fin de ce module
 
-- Comparez votre solution avec `database/schema.sql`
-- Testez avec : `psql -U postgres -d ecommerce -c "\dt"` (doit lister 12 tables)
+```
+nikebasket/
+├── database/
+│   └── schema.sql          ✅ module 01
+└── backend/
+    ├── package.json        ← donné
+    ├── .env.example        ← donné (copier en .env et remplir)
+    └── src/
+        ├── config/
+        │   └── db.js       ← TODO : pool PostgreSQL
+        ├── middleware/
+        │   └── errorHandler.js  ← donné
+        └── app.js          ← TODO : serveur Express
+```
 
 ---
 
-**Module suivant → `module-02-starter` : Serveur Express**
+## Mise en place
+
+```bash
+cd backend
+cp .env.example .env      # Copier et remplir vos identifiants PostgreSQL
+npm install               # Installer les dépendances
+```
+
+---
+
+## Votre mission
+
+### Fichier 1 : `backend/src/config/db.js`
+
+Créer le **pool de connexions** PostgreSQL en lisant les variables d'environnement `PG_HOST`, `PG_PORT`, `PG_USER`, `PG_PASSWORD`, `PG_DATABASE`.
+
+### Fichier 2 : `backend/src/app.js`
+
+Configurer le serveur Express avec :
+- **CORS** avec `credentials: true` (obligatoire pour les cookies JWT)
+- **cookie-parser** (pour lire les cookies dans `req.cookies`)
+- **express.json()** (pour parser le corps des requêtes)
+- Une route de santé : `GET /api/health`
+- Le middleware d'erreurs en dernier
+
+---
+
+## Tester votre travail
+
+```bash
+npm run dev
+# → Serveur démarré sur http://localhost:3001
+
+curl http://localhost:3001/api/health
+# → { "status": "ok", "timestamp": "..." }
+```
+
+---
+
+## Questions de compréhension
+
+1. Pourquoi `credentials: true` est-il indispensable dans la config CORS ?
+2. Quelle est la différence entre un pool de connexions et une connexion directe ?
+3. Pourquoi le middleware d'erreurs doit-il être monté **en dernier** ?
+4. Que se passe-t-il si `dotenv.config()` est appelé après l'utilisation des variables ?
+
+---
+
+**Module suivant → `module-03-starter` : API Produits (CRUD)**
