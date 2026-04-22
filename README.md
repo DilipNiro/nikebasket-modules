@@ -28,12 +28,37 @@ nikebasket/
 
 ---
 
+## Rappel SQL — La syntaxe de base
+
+Si vous n'avez jamais écrit de SQL, voici les éléments essentiels :
+
+```sql
+CREATE TABLE "nom_table" (
+  id         SERIAL PRIMARY KEY,                -- identifiant auto-incrémenté
+  nom        VARCHAR(100)  NOT NULL,            -- texte, obligatoire
+  statut     VARCHAR(20)   NOT NULL DEFAULT 'actif'
+                           CHECK (statut IN ('actif', 'inactif')),
+  created_at TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  -- Clé étrangère : référence une autre table
+  categorie_id INTEGER NOT NULL REFERENCES "categorie"(id) ON DELETE CASCADE
+);
+
+-- Index : accélère les recherches sur cette colonne
+CREATE INDEX idx_nom_table_categorie ON "nom_table"(categorie_id);
+```
+
+Un exemple complet est aussi fourni en commentaire dans le fichier `schema.sql` — **lisez-le avant de commencer**.
+
+---
+
 ## Votre mission
 
 Ouvrez `database/schema.sql`.
 
 12 `TODO` vous attendent — chaque TODO correspond à une table à créer.  
 Les colonnes attendues sont décrites en commentaires au-dessus de chaque TODO.
+
+> Commencez par les tables simples (TODO 2, 3, 4) avant d'attaquer TODO 1 qui a plus de colonnes.
 
 ### Ordre de création (important !)
 

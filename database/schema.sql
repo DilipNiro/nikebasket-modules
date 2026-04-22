@@ -15,6 +15,36 @@
 -- Votre mission : écrire le SQL à la place des TODO.
 -- =============================================================
 
+-- =============================================================
+-- EXEMPLE — Lisez ceci avant de commencer
+-- Voici comment créer une table PostgreSQL correctement :
+-- =============================================================
+--
+--   CREATE TABLE "marque" (
+--     id         SERIAL PRIMARY KEY,               -- identifiant auto-incrémenté
+--     nom        VARCHAR(100) NOT NULL,             -- texte obligatoire
+--     pays       VARCHAR(50)  NOT NULL DEFAULT 'FR',-- valeur par défaut
+--     actif      BOOLEAN      NOT NULL DEFAULT TRUE,-- booléen
+--     created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()-- date + heure + fuseau
+--   );
+--
+-- Puis pour ajouter une clé étrangère (relation vers "marque") :
+--
+--   CREATE TABLE "produit" (
+--     id        SERIAL PRIMARY KEY,
+--     nom       VARCHAR(100) NOT NULL,
+--     marque_id INTEGER      NOT NULL REFERENCES "marque"(id) ON DELETE CASCADE,
+--     prix      DECIMAL(10,2) NOT NULL CHECK (prix >= 0)
+--   );
+--   CREATE INDEX idx_produit_marque ON "produit"(marque_id);
+--
+-- ON DELETE CASCADE = si on supprime une marque, tous ses produits sont supprimés.
+-- CHECK (prix >= 0) = PostgreSQL refuse les valeurs négatives.
+-- UNIQUE = une seule ligne peut avoir cette valeur (ex: email).
+--
+-- À vous maintenant — reproduisez ce pattern pour les 12 tables ci-dessous.
+-- =============================================================
+
 -- Suppression dans l'ordre inverse des dépendances (donné)
 DROP TABLE IF EXISTS "paiement"            CASCADE;
 DROP TABLE IF EXISTS "commande_historique" CASCADE;
